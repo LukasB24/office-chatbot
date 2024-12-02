@@ -6,17 +6,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 
 
-# wirklich nur weil wir 45minuten zeit haben anstatt es von Hand in DBeaver zu machen;-)
 def postgres_create_db(dbname):
     engine = create_engine("postgresql://user:password@localhost:5432/postgres")
     with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as connection:
         connection.execute(text(f"create database {dbname}"))
 
-
-# das hier ist mehr oder weniger der Code aus Moodle
-# Extension reinmachen, Tabelle erstellen, Vektoren einfügen, Vektoren abfragen
 def test_postgres_connection():
-    # Connect to PostgreSQL
     conn = psycopg2.connect(
         dbname='ragdb',
         user='user',
@@ -26,11 +21,8 @@ def test_postgres_connection():
     )
     cur = conn.cursor()
 
-    # Enable the pgvector extension (if not already enabled)
     cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
 
-    # Create a table with a vector column
-    # Achtung: Tabelle hat KEIN document Feld, da hier wirklich nur ein Test der Vector-Funktionalität gemacht wird
     cur.execute("""
         CREATE TABLE IF NOT EXISTS items (
             id SERIAL PRIMARY KEY,
@@ -39,9 +31,6 @@ def test_postgres_connection():
     """)
     conn.commit()
 
-    # Insert a few sample vectors
-    # die Nutzung von numpy ist hier nicht notwendig
-    # eine einfache Liste hätte auch gereicht
     sample_vectors = [
         np.array([1.1, 0.2, 0.3], dtype=np.float32),
         np.array([1.4, 0.5, 0.6], dtype=np.float32),
@@ -52,7 +41,6 @@ def test_postgres_connection():
         cur.execute("INSERT INTO items (embedding) VALUES (%s);", (vector.tolist(),))
     conn.commit()
 
-    # Perform a basic vector similarity query
     query_vector = np.array([0.1, 0.2, 0.25], dtype=np.float32)
     cur.execute("""
         SELECT id, embedding, embedding <-> %s::vector AS distance
@@ -61,9 +49,6 @@ def test_postgres_connection():
         LIMIT 7;
     """, (query_vector.tolist(),))
 
-    # leider ist das Erebnis "result" kein Dictionary, sondern eine Liste,
-    # d.h. wir müssen mit Hilfe von Indizes auf die einzelnen Elemente zugreifen
-    # Fetch and display results
     results = cur.fetchall()
     for row in results:
         print(f"ID: {row[0]}, Embedding: {row[1]}, Distance: {row[2]}")
@@ -88,7 +73,7 @@ def test_ollama_embeddings():
         "Llamas are vegetarians and have very efficient digestive systems",
         "Llamas live to be about 20 years old, though some only live for 15 years and others live to be 30 years old",
     ]
-    # Connect to PostgreSQL
+
     conn = psycopg2.connect(
         dbname='ragdb',
         user='user',
@@ -97,7 +82,6 @@ def test_ollama_embeddings():
         port='5432'
     )
     cur = conn.cursor()
-    # diesmal MIT einem document Feld
     cur.execute("""
             CREATE TABLE IF NOT EXISTS documentvectors2 (
                 id SERIAL PRIMARY KEY,
@@ -110,7 +94,6 @@ def test_ollama_embeddings():
     for i, d in enumerate(documents):
         response = ollama.embeddings(model="mxbai-embed-large", prompt=d)
         embedding = response["embedding"]
-        # print(len(embedding))
         print(embedding)
         cur.execute("INSERT INTO documentvectors2 (embedding, document) VALUES (%s, %s);", (embedding, d))
 
@@ -151,7 +134,6 @@ def find_closest_vector(query):
             LIMIT 3;
         """, (embedding,))
 
-    # Fetch and display results
     results = cur.fetchall()
     for row in results:
         print(f"ID: {row[0]}, Distance: {row[3]},  Doc: {row[1]}, Embedding: {row[2]}")
