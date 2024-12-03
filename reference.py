@@ -1,7 +1,6 @@
-import psycopg2
 import numpy as np
 import ollama
-import struct
+import psycopg2
 from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 
