@@ -10,67 +10,14 @@ def postgres_create_db(dbname):
     with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as connection:
         connection.execute(text(f"create database {dbname}"))
 
-def test_postgres_connection():
-    conn = psycopg2.connect(
-        dbname='ragdb',
-        user='user',
-        password='password',
-        host='localhost',
-        port='5432'
-    )
-    cur = conn.cursor()
-
-    cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
-
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS items (
-            id SERIAL PRIMARY KEY,
-            embedding VECTOR(3)  -- Example: 3-dimensional vector
-        );
-    """)
-    conn.commit()
-
-    sample_vectors = [
-        np.array([1.1, 0.2, 0.3], dtype=np.float32),
-        np.array([1.4, 0.5, 0.6], dtype=np.float32),
-        np.array([1.7, 0.8, 0.9], dtype=np.float32)
-    ]
-
-    for vector in sample_vectors:
-        cur.execute("INSERT INTO items (embedding) VALUES (%s);", (vector.tolist(),))
-    conn.commit()
-
-    query_vector = np.array([0.1, 0.2, 0.25], dtype=np.float32)
-    cur.execute("""
-        SELECT id, embedding, embedding <-> %s::vector AS distance
-        FROM items
-        ORDER BY distance
-        LIMIT 7;
-    """, (query_vector.tolist(),))
-
-    results = cur.fetchall()
-    for row in results:
-        print(f"ID: {row[0]}, Embedding: {row[1]}, Distance: {row[2]}")
-
-    # Clean up (optional)
-    # cur.execute("DROP TABLE IF EXISTS items;")
-    # conn.commit()
-
-    # Close connection
-    cur.close()
-    conn.close()
-
-
-
 def test_ollama_embeddings():
-    # anstatt mit echten Dokumenten zu arbeiten, wird hier mit einem Dummy-Array gearbeitet
     documents = [
-        "Llamas are members of the camelid family meaning they're pretty closely related to vicuñas and camels",
-        "Llamas were first domesticated and used as pack animals 4,000 to 5,000 years ago in the Peruvian highlands",
-        "Llamas can grow as much as 6 feet tall though the average llama between 5 feet 6 inches and 5 feet 9 inches tall",
-        "Llamas weigh between 280 and 450 pounds and can carry 25 to 30 percent of their body weight",
-        "Llamas are vegetarians and have very efficient digestive systems",
-        "Llamas live to be about 20 years old, though some only live for 15 years and others live to be 30 years old",
+        "Michael: All right Jim. Your quarterlies look very good. How are things at the library? Jim: Oh, I told you. I couldn’t close it. So…",
+        "Michael: So you’ve come to the master for guidance? Is this what you’re saying, grasshopper? Jim: Actually, you called me in here, but yeah.",
+        "Michael: All right. Well, let me show you how it’s done. Michael:  [on the phone] Yes, I’d like to speak to your office manager, please. Yes, hello. This is Michael Scott. I am the Regional Manager of Dunder Mifflin Paper Products. Just wanted to talk to you manager-a-manger. [quick cut scene] All right. Done deal. Thank you very much, sir. You’re a gentleman and a scholar. Oh, I’m sorry. OK. I’m sorry. My mistake. [hangs up] That was a woman I was talking to, so… She had a very low voice. Probably a smoker, so… [Clears throat] So that’s the way it’s done. Michael:  I’ve, uh, I’ve been at Dunder Mifflin for 12 years, the last four as Regional Manager. If you want to come through here… See we have the entire floor. So this is my kingdom, as far as the eye can see. This is our receptionist, Pam. Pam! Pam-Pam! Pam Beesly. Pam has been with us for…  forever. Right, Pam? Pam: Well. I don’t know.",
+        "Michael: If you think she’s cute now, you should have seen her a couple of years ago. [growls] Pam: What?",
+        "Michael: Any messages? Pam: Uh, yeah. Just a fax.",
+        "Michael: Oh, Pam. This is from corporate. How many times have I told you? There’s a special filing cabinet for things from corporate. Pam: You haven’t told me."
     ]
 
     conn = psycopg2.connect(
@@ -96,21 +43,10 @@ def test_ollama_embeddings():
         print(embedding)
         cur.execute("INSERT INTO documentvectors2 (embedding, document) VALUES (%s, %s);", (embedding, d))
 
-        # das hier ist der Code aus dem ollama-tutorial https://ollama.com/blog/embedding-models
-        # wo sie die chromadb nutzen
-        # Chroma sieht wie ein spannendes Projekt aus, ist aber wirklich noch beta, daher erstmal mit
-        # "echten" Werkzeugen;-)
-        """collection.add(
-            ids=[str(i)],
-            embeddings=[embedding],
-            documents=[d]
-        )
-        """
     conn.commit()
     cur.close()
     conn.close()
 
-# hier wird ein Embedding für eine query erstellt und dann die 3 Dokumente mit den geringsten Distanzen gesucht
 def find_closest_vector(query):
     print(f"embedding {query} = ", end="")
     response = ollama.embeddings(model="mxbai-embed-large", prompt=query)
@@ -138,8 +74,8 @@ def find_closest_vector(query):
         print(f"ID: {row[0]}, Distance: {row[3]},  Doc: {row[1]}, Embedding: {row[2]}")
 
     # Clean up (optional)
-    # cur.execute("DROP TABLE IF EXISTS items;")
-    # conn.commit()
+    cur.execute("DROP TABLE IF EXISTS documentvectors2;")
+    conn.commit()
 
     # Close connection
     cur.close()
@@ -161,12 +97,20 @@ def find_closest_vector(query):
 
     print(output['response'])
 
-
-
-
 if __name__ == '__main__':
-    #postgres_create_db('ragdb')
-    test_postgres_connection()
+    # postgres_create_db('ragdb')
     test_ollama_embeddings()
-    find_closest_vector("What animals are llamas related to?")
-    print(f"Ollama running models: {ollama.ps()}")
+    # find_closest_vector("Who is the chief of the company?")
+    find_closest_vector("How does pam feel about michael?")
+    # print(f"Ollama running models: {ollama.ps()}")
+
+    person = "Pam"
+    statement = """Michael:  I’ve, uh, I’ve been at Dunder Mifflin for 12 years, the last four as Regional Manager. If you want to come through here… See we have the entire floor. So this is my kingdom, as far as the eye can see. This is our receptionist, Pam. Pam! Pam-Pam! Pam Beesly. Pam has been with us for…  forever. Right, Pam?
+                 Pam: Well. I don’t know."
+                 Michael: If you think she’s cute now, you should have seen her a couple of years ago. [growls] 
+                 Pam: What?"""
+    output = ollama.generate(
+        model="llama3.1:8b",
+        prompt=f"What is the emotion of {person} in this conversation, describe with one word like anger, uncomfortable, happy, sad, surprised or something else: {statement}"
+    )
+    print(output['response'])
