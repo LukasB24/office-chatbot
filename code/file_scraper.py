@@ -1,12 +1,13 @@
 import pandas as pd
 
+
 class Document:
-    def __init__(self, text, season, episode):
+    def __init__(self, text: str, season: int, episode: int):
         self.text = text
         self.season = season
         self.episode = episode
 
-def extract_lines_with_two_speaker_changes(df):
+def extract_lines_with_two_speaker_changes(df: pd.DataFrame) -> list[Document]:
     result = []
     current_group = []
     previous_speaker = None
@@ -39,5 +40,3 @@ def extract_lines_with_two_speaker_changes(df):
         result.append(Document(" ".join(current_group), season, episode))
 
     return result
-
-data = pd.read_csv("the-office_lines.csv")

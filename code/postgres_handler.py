@@ -56,7 +56,7 @@ class PostgresHandler:
         except Exception as e:
             print(f"Exception while creating table: {e}")
 
-    def insert_data(self, embedding, dialog, episode, season) -> int:
+    def insert_data(self, embedding: list[int], dialog: str, episode: int, season: int) -> int:
         try:
             cursor = self.conn.cursor()
 
@@ -77,7 +77,7 @@ class PostgresHandler:
             print(f"Exception while inserting data: {e}")
             return -1
 
-    def find_closest_vector(self, query) -> list:
+    def find_closest_vector(self, query: str) -> list:
         response = ollama.embeddings(model="mxbai-embed-large", prompt=query)
         embedding = response["embedding"]
 

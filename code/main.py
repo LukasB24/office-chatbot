@@ -39,5 +39,17 @@ def insert_data():
 if __name__ == '__main__':
     postgres_handler = postgres_handler.PostgresHandler()
     mongo_handler = mongo_handler.MongoHandler()
+
+    query = "What did michael say regarding a wastepaper and what was the intention behind this statement?"
+
+    closest_semantic_result = postgres_handler.find_closest_vector(query)
+    fetched_emotions = mongo_handler.get_metadata(closest_semantic_result[0])
+
+    query_result = ollama.generate(
+        model="llama3.1:8b",
+        prompt=f"Using this data: {closest_semantic_result[1]} and this emotion context, if asked for emotions: {fetched_emotions}. Respond to this prompt: {query}"
+    )
+
+    print(query_result['response'])
     #insert_data()
 
