@@ -1,4 +1,3 @@
-import numpy as np
 import ollama
 import psycopg2
 from sqlalchemy import create_engine
@@ -97,7 +96,7 @@ def find_closest_vector(query):
 
     output = ollama.generate(
         model="llama3.1:8b",
-        prompt=f"Using this data: {closest_semantic_result[1]} and this emotion context: {emotions}. Respond to this prompt: {query}"
+        prompt=f"Using this data: {closest_semantic_result[1]} and this emotion context, if asked for emotions: {emotions}. Respond to this prompt: {query}"
     )
 
     print(output['response'])
@@ -106,5 +105,5 @@ if __name__ == '__main__':
     #postgres_create_db('ragdb')
     test_ollama_embeddings()
     # find_closest_vector("Who is the chief of the company?")
-    find_closest_vector("How does pam feel about michael in this dialog?")
+    find_closest_vector("How does pam feel about michael?")
 
