@@ -24,6 +24,7 @@ with img_col:
     st.image("https://dist.neo4j.com/wp-content/uploads/20210423062553/neo4j-social-share-21.png", width=200)
 
 user_input = st.text_input("Enter your question regarding 'The Office'", key="input")
+
 if user_input:
     cypher_query = ""
     database_results = ""
@@ -43,7 +44,11 @@ if user_input:
                             and this emotion context, if asked for emotions: {fetched_emotions}. 
                             This is season: {closest_semantic_result[3]} and this is episode: {closest_semantic_result[4]} use this metadata if asked for. 
                             If a query is not specific enough, please ask for more details without telling a emotional context or metadata provided to you.
-                            A query that should be more specific could be "How does pam feel about michael" this is a general question and you should ask for a specific situation.
+                            A query that should be more specific could be "How does pam feel about michael?". This is a general question and you should ask if it's possible to specify the question and ask again.
+                            A query like "In which season and episode does pam feel uncomfortable?" is specific enough tough and you should answer with the episode and season.
+                            It is important that you only answer the question that was asked and not provide additional information like emotion context or metadata that was not asked for. 
+                            If the question is not specific enough only ask for clarification without giving an answer to the question.
+                            Answer short and precise.
                             Respond to this prompt: {user_input}"""
             )
 
