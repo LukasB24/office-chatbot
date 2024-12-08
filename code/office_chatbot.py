@@ -20,13 +20,10 @@ title_col, empty_col, img_col = st.columns([2, 1, 2])
 
 with title_col:
     st.title("The Office assistant")
-with img_col:
-    st.image("https://dist.neo4j.com/wp-content/uploads/20210423062553/neo4j-social-share-21.png", width=200)
 
 user_input = st.text_input("Enter your question regarding 'The Office'", key="input")
 
 if user_input:
-    cypher_query = ""
     database_results = ""
 
     with st.spinner("Processing your question..."):
@@ -46,6 +43,7 @@ if user_input:
                             If a query is not specific enough, please ask for more details without telling a emotional context or metadata provided to you.
                             A query that should be more specific could be "How does pam feel about michael?". This is a general question and you should ask if it's possible to specify the question and ask again.
                             A query like "In which season and episode does pam feel uncomfortable?" is specific enough tough and you should answer with the episode and season.
+                            A more specific question could be "How does pam feel about michael when he introduces her and why?" This question is more specific and can be answered more accurately.
                             It is important that you only answer the question that was asked and not provide additional information like emotion context or metadata that was not asked for. 
                             If the question is not specific enough only ask for clarification without giving an answer to the question.
                             Answer short and precise.
@@ -63,14 +61,6 @@ if user_input:
 
     with col1:
         if st.session_state["system_msgs"]:
-            for i in range(len(st.session_state["system_msgs"]) - 1, -1, -1):
-                message(st.session_state["system_msgs"][i], key=str(i) + "_assistant")
+            for i in range(len(st.session_state["system_msgs"])):
                 message(st.session_state["user_msgs"][i], is_user=True, key=str(i) + "_user")
-
-    with col3:
-        if cypher_query:
-            st.text_area("Last query", cypher_query, key="_query", height=240)
-
-    with col2:
-        if database_results:
-            st.text_area("Last answer", database_results, key="_answer", height=240)
+                message(st.session_state["system_msgs"][i], key=str(i) + "_assistant")
