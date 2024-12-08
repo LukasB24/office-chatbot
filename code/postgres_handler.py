@@ -1,25 +1,3 @@
-"""
-Datastructures for MonoDB:
-
-{
-    "id": "tt1234567",
-    "postgres_id": "1", // index needed
-    "emotions": {
-        "Michael": ["confident", "amused"],
-        "Pam": ["uncomfortable"]
-    }
-}
-
-Datastructures for PostgreSQL:
-
-CREATE TABLE IF NOT EXISTS documentVectors (
-    id SERIAL PRIMARY KEY,
-    embedding VECTOR(1024),  -- Example: 3-dimensional vector
-    dialogDocument TEXT,
-    episode INTEGER,
-    season INTEGER
-);
-"""
 import psycopg2
 import ollama
 
@@ -83,7 +61,7 @@ class PostgresHandler:
 
         cur = self.conn.cursor()
         cur.execute("""
-                  SELECT id, dialogDocument, embedding, embedding <-> %s::vector AS distance
+                  SELECT id, dialogDocument, embedding, season, episode, embedding <-> %s::vector AS distance
                   FROM documentVectors
                   ORDER BY distance
                   LIMIT 3;

@@ -7,7 +7,7 @@ class Document:
         self.season = season
         self.episode = episode
 
-def extract_lines_with_two_speaker_changes(df: pd.DataFrame) -> list[Document]:
+def chunk_dynamically(df: pd.DataFrame) -> list[Document]:
     result = []
     current_group = []
     previous_speaker = None
