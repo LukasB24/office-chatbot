@@ -1,13 +1,16 @@
-import streamlit as st
-from streamlit_chat import message
 from timeit import default_timer as timer
 
-import postgres_handler
-import mongo_handler
 import ollama
+import streamlit as st
+from streamlit_chat import message
+
+import mongo_handler
+import postgres_handler
+import redis_handler
 
 postgres_handler = postgres_handler.PostgresHandler()
 mongo_handler = mongo_handler.MongoHandler()
+redis_handler = redis_handler.RedisHandler()
 
 st.set_page_config(layout="wide")
 
@@ -30,30 +33,39 @@ if user_input:
         st.session_state.user_msgs.append(user_input)
         start = timer()
 
-        try:
-            closest_semantic_result = postgres_handler.find_closest_vector(user_input)
-            fetched_emotions = mongo_handler.get_metadata(closest_semantic_result[0])
+        cached_response = redis_handler.get_data(user_input)
 
-            query_result = ollama.generate(
-                model="llama3.1:8b",
-                prompt=f"""
-                            Using this data: {closest_semantic_result[1]} 
-                            and this emotion context, if asked for emotions: {fetched_emotions}. 
-                            This is season: {closest_semantic_result[3]} and this is episode: {closest_semantic_result[4]} use this metadata if asked for. 
-                            If a query is not specific enough, please ask for more details without telling a emotional context or metadata provided to you.
-                            A query that should be more specific could be "How does pam feel about michael?". This is a general question and you should ask if it's possible to specify the question and ask again.
-                            A query like "In which season and episode does pam feel uncomfortable?" is specific enough tough and you should answer with the episode and season.
-                            A more specific question could be "How does pam feel about michael when he introduces her and why?" This question is more specific and can be answered more accurately.
-                            It is important that you only answer the question that was asked and not provide additional information like emotion context or metadata that was not asked for. 
-                            If the question is not specific enough only ask for clarification without giving an answer to the question.
-                            Answer short and precise.
-                            Respond to this prompt: {user_input}"""
-            )
+        if cached_response:
+            st.session_state.system_msgs.append(cached_response)
+        else:
+            try:
+                response = ollama.embeddings(model="mxbai-embed-large", prompt=user_input)
+                embedding = response["embedding"]
 
-            st.session_state.system_msgs.append(query_result['response'])
-        except Exception as e:
-            st.write("Failed to process question. Please try again.")
-            print(e)
+                closest_semantic_result = postgres_handler.find_closest_vector(embedding)
+                fetched_emotions = mongo_handler.get_metadata(closest_semantic_result[0])
+
+                query_result = ollama.generate(
+                    model="llama3.1:8b",
+                    prompt=f"""
+                                Using this data: {closest_semantic_result[1]} 
+                                and this emotion context, if asked for emotions: {fetched_emotions}. 
+                                This is season: {closest_semantic_result[3]} and this is episode: {closest_semantic_result[4]} use this metadata if asked for. 
+                                If a query is not specific enough, please ask for more details without telling a emotional context or metadata provided to you.
+                                A query that should be more specific could be "How does pam feel about michael?". This is a general question and you should ask if it's possible to specify the question and ask again.
+                                A query like "In which season and episode does pam feel uncomfortable?" is specific enough tough and you should answer with the episode and season.
+                                A more specific question could be "How does pam feel about michael when he introduces her and why?" This question is more specific and can be answered more accurately.
+                                It is important that you only answer the question that was asked and not provide additional information like emotion context or metadata that was not asked for. 
+                                If the question is not specific enough only ask for clarification without giving an answer to the question.
+                                Answer short and precise.
+                                Respond to this prompt: {user_input}"""
+                )
+
+                redis_handler.set_data(user_input, query_result['response'])
+                st.session_state.system_msgs.append(query_result['response'])
+            except Exception as e:
+                st.write("Failed to process question. Please try again.")
+                print(e)
 
     st.write(f"Time taken: {timer() - start:.2f}s")
 

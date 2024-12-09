@@ -1,5 +1,5 @@
 import psycopg2
-import ollama
+
 
 class PostgresHandler:
     def __init__(self):
@@ -55,10 +55,7 @@ class PostgresHandler:
             print(f"Exception while inserting data: {e}")
             return -1
 
-    def find_closest_vector(self, query: str) -> list:
-        response = ollama.embeddings(model="mxbai-embed-large", prompt=query)
-        embedding = response["embedding"]
-
+    def find_closest_vector(self, embedding: list[int]) -> list:
         cur = self.conn.cursor()
         cur.execute("""
                   SELECT id, dialogDocument, embedding, season, episode, embedding <-> %s::vector AS distance

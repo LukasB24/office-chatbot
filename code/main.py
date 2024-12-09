@@ -57,5 +57,5 @@ if __name__ == '__main__':
     episode_json = create_json_from_transcription(transcript, filename + ".mp4")
 
     minio_handler.upload_json(filename + ".json", episode_json)
-    #insert_data()
+    insert_data()
 
