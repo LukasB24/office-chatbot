@@ -4,7 +4,7 @@ import psycopg2
 class PostgresHandler:
     def __init__(self):
         self.conn = psycopg2.connect(
-            dbname='ragdb',
+            dbname='mydb',
             user='user',
             password='password',
             host='localhost',
@@ -17,6 +17,7 @@ class PostgresHandler:
             cursor = self.conn.cursor()
 
             create_table_query = """
+            CREATE EXTENSION IF NOT EXISTS vector;
             CREATE TABLE IF NOT EXISTS documentVectors (
                 id SERIAL PRIMARY KEY,
                 embedding VECTOR(1024),
@@ -41,7 +42,7 @@ class PostgresHandler:
             insert_query = """
                 INSERT INTO documentVectors (embedding, dialogDocument, episode, season)
                 VALUES (%s, %s, %s, %s)
-                RETURNING id;  -- Gibt die ID des eingefügten Dokuments zurück
+                RETURNING id; 
             """
 
             cursor.execute(insert_query, (embedding, dialog, episode, season))

@@ -11,15 +11,15 @@ def extract_emotions_from_dialog(dialog: str):
     output = ollama.generate(
         model="llama3.1:8b",
         prompt=f"""
-            How do the persons in in this conversation feel? \n 
-            1. Please describe the emotions of each person in this conversation with exactly one word. \n 
+            How do the persons in in this conversation feel?
+            1. Please describe the emotions of each person in this conversation with exactly one word.
             2. One person sometimes says multiple sentences but I want you to describe the emotion of this person in general with one word. 
-            This means characters in this conversation should not appear twice in your answer. \n 
-            3. Return the result as json like this but don't use exactly those values: {example} \n 
-            4. Describe with one word like anger, uncomfortable, happy, sad, surprised or something else. \n 
-            5. Don't provide whole sentences only the json. \n 
-            6. Make sure that characters dont appear multiple times in the whole JSON. \n 
-            7. follow the rules 1-7 ; \n 
+            This means characters in this conversation should not appear twice in your answer.
+            3. Return the result as json like this but don't use exactly those values: {example}
+            4. Describe with one word like anger, uncomfortable, happy, sad, surprised or something else.
+            5. Don't provide whole sentences only the json.
+            6. Make sure that characters dont appear multiple times in the whole JSON.
+            7. follow the rules 1-7 ;
             conversation: {dialog}. 
         """,
         options={"temperature": 0}
@@ -31,7 +31,7 @@ def insert_data():
     mongo = mongo_handler.MongoHandler()
 
     data = pd.read_csv("the-office_lines.csv")
-    chunks = chunk_dynamically(data.iloc[0:209])
+    chunks = chunk_dynamically(data.iloc[0:953])
 
     for document in chunks:
         response = ollama.embeddings(model="mxbai-embed-large", prompt=document.text)
