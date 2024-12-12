@@ -1,5 +1,3 @@
-import json
-
 from pymongo import MongoClient, ASCENDING
 
 class MongoHandler:
@@ -35,7 +33,6 @@ class MongoHandler:
                 "$match": {
                     "$expr": {
                         "$eq": [{"$type": "$emotions.emotions"}, "array"]
-                        # Überprüfe, ob `emotions.emotions` ein Array ist
                     }
                 }
             },

@@ -1,0 +1,13 @@
+whisper
+pandas
+ollama
+minio
+pymongo
+py2neo
+redis
+psycopg2-binary
+streamlit
+streamlit_chat
+langchain-ollama
+langchain-community
+langchain-neo4j

@@ -30,15 +30,18 @@ def extract_emotions_from_dialog(dialog: str):
     )
     return output['response']
 
-def insert_data():
+def insert_data(last_line: int):
     postgres = postgres_handler.PostgresHandler()
     mongo = mongo_handler.MongoHandler()
     neo4j_handler = Neo4jHandler()
 
     data = pd.read_csv("the-office_lines.csv")
-    chunks = chunk_dynamically(data.iloc[0:293])
+    chunks = chunk_dynamically(data.iloc[0:last_line])
 
     for document in chunks:
+        if document.text == "":
+            continue
+
         response = ollama.embeddings(model="mxbai-embed-large", prompt=document.text)
         embedding = response["embedding"]
         postgres_id = postgres.insert_data(embedding, document.text, document.episode, document.season)
@@ -72,6 +75,6 @@ def create_transcription():
     minio_handler.upload_json(filename + ".json", episode_json)
 
 if __name__ == '__main__':
-    create_transcription()
-    insert_data()
+    # create_transcription()
+    insert_data(last_line=293) # set to smaller number if you want to test the script (e.g. 100)
 
